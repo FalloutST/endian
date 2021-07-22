@@ -1,0 +1,73 @@
+#ifndef BIG_ENDIAN_H
+#define BIG_ENDIAN_H
+
+#include <QtEndian>
+#include <utility>
+
+#pragma pack(push,1)
+template <class T>
+struct big_endian
+{
+    typedef big_endian<T> big_endian_t;
+    T t;
+    big_endian<T>(){}
+    ~big_endian<T>(){}
+    template<class A>
+    big_endian(const A& other)
+    {
+        if constexpr (sizeof (T) > 1)  qToBigEndian(static_cast<T>(other));
+        else  static_cast<T>(other);
+    }
+    template<class A>
+    big_endian_t& operator=(const A& other)
+    {
+        if constexpr ( sizeof (T) > 1 ) t = qToBigEndian(static_cast<T>(other));
+        else  t = static_cast<T>(other);
+        return *this;
+    }
+    template<class A>
+    big_endian_t& operator+=(const A& other)
+    {
+        t = qToBigEndian(qFromoBigEndian(t) + static_cast<T>(other));
+        return *this;
+    }
+    template<class A>
+    big_endian_t& operator-=(const A& other)
+    {
+        t = qToBigEndian(qFromoBigEndian(t) - static_cast<T>(other));
+        return *this;
+    }
+    big_endian_t& operator++()
+    {
+        auto tmp = qFromoBigEndian(t);
+        t = qToBigEndian(++tmp);
+        return *this;
+    }
+    big_endian_t operator++(int)
+    {
+        big_endian_t copy(*this);
+        operator++();
+        return std::move(copy);
+    }
+    big_endian_t& operator--()
+    {
+        auto tmp = qFromoBigEndian(t);
+        t = qToBigEndian(--tmp);
+        return *this;
+    }
+    big_endian_t operator--(int)
+    {
+        big_endian_t copy(*this);
+        operator--();
+        return copy;
+    }
+    template<class A>
+    bool operator==(const A& other)
+    {
+        return (qFromoBigEndian(t) == static_cast<T>(other));
+    }
+    operator T() { return std::move( qFromBigEndian(t) ); }
+};
+
+#pragma pack(pop)
+#endif // BIG_ENDIAN_H

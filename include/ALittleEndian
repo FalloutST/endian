@@ -1,0 +1,80 @@
+#ifndef LITTLE_ENDIAN_HPP
+#define LITTLE_ENDIAN_HPP
+
+#include <QtEndian>
+#include <utility>
+
+#pragma pack(push,1)
+template <class T>
+struct little_endian
+{
+    typedef little_endian<T> little_endian_t;
+    T t;
+    little_endian<T>(){}
+    ~little_endian<T>(){}
+
+    template<class A> constexpr
+    little_endian(const A& other)
+    {
+        if constexpr (sizeof (T) > 1)  qToLittleEndian(static_cast<T>(other));
+        else  static_cast<T>(other);
+    }
+
+    template<class A>
+    little_endian_t& operator=(const A& other)
+    {
+        if constexpr ( sizeof (T) > 1 )
+                t = qToLittleEndian(static_cast<T>(other));
+        else  t = static_cast<T>(other);
+        return *this;
+    }
+    template<class A>
+    little_endian_t& operator+=(const A& other)
+    {
+        t = qToLittleEndian(qFromLittleEndian(t) + static_cast<T>(other));
+        return *this;
+    }
+    template<class A>
+    little_endian_t& operator-=(const A& other)
+    {
+        t = qToLittleEndian(qFromLittleEndian(t) - static_cast<T>(other));
+        return *this;
+    }
+    little_endian_t& operator++()
+    {
+        auto tmp = qFromLittleEndian(t);
+        t = qToLittleEndian(++tmp);
+        return *this;
+    }
+    little_endian_t operator++(int)
+    {
+        little_endian_t copy(*this);
+        operator++();
+        return copy;
+    }
+    little_endian_t& operator--()
+    {
+        auto tmp = qFromLittleEndian(t);
+        t = qToLittleEndian(--tmp);
+        return *this;
+    }
+    little_endian_t operator--(int)
+    {
+        little_endian_t copy(*this);
+        operator--();
+        return copy;
+    }
+    template<class A>
+    bool operator==(const A& other)
+    {
+        return (qFromLittleEndian(t) == static_cast<T>(other));
+    }
+    template<class A>
+    operator A() { return static_cast<A>(qFromLittleEndian(t)); }
+
+    operator T() { return qFromLittleEndian(t); }
+
+};
+#pragma pack(pop)
+
+#endif // LITTLE_ENDIAN_HPP
